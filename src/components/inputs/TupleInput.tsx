@@ -5,12 +5,7 @@ type TupleInputProps = {
   onChange: (value: number[]) => void;
 };
 
-export const TupleInput = ({
-  label,
-  value,
-  labels,
-  onChange,
-}: TupleInputProps) => {
+export const TupleInput = ({ label, value, onChange }: TupleInputProps) => {
   return (
     <label className="flex items-center justify-between">
       <span className="whitespace-nowrap">{label}</span>

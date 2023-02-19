@@ -31,7 +31,9 @@ export const Map = () => {
     if (mapContainerRef.current === null) return;
 
     mapGLRef.current = new MapGL({
-      style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${process.env.NEXT_PUBLIC_MAPTILER_API_KEY}`,
+      style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${
+        process.env.NEXT_PUBLIC_MAPTILER_API_KEY as string
+      }`,
       container: mapContainerRef.current,
       center: [-74.5, 40], // starting position [lng, lat]
       zoom: 9, // starting zoom
