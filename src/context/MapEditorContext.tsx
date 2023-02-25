@@ -3,7 +3,7 @@ import type {
   FilterSpecification,
   GeoJSONSourceSpecification,
 } from "maplibre-gl";
-import type { FC, ReactNode } from "react";
+import { FC, ReactNode, useTransition } from "react";
 import {
   createContext,
   useContext,
@@ -21,48 +21,39 @@ import { getInitialLayerStyle } from "../lib/utils";
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 type MapEditorContextState = {
-  layers: Record<string, SupportedLayerSpecification>;
   sources: Record<string, GeoJSONSourceSpecification>;
-  setLayerSource: (layerId: string, sourceId: string) => void;
-  setLayerType: (layerId: string, layerType: SupportedLayerType) => void;
-  setLayerMinZoom: (layerId: string, zoom: number) => void;
-  setLayerMaxZoom: (layerId: string, zoom: number) => void;
-  setLayerFilter: (layerId: string, filter: string) => void;
-  setLayerPaintProperty: (
-    layerId: string,
-    paintProperty: string,
-    value: unknown
-  ) => void;
-  setLayerLayoutProperty: (
-    layerId: string,
-    layoutProperty: string,
-    value: unknown
-  ) => void;
+  addSource: (sourceId: string) => void;
+  setSourceData: (sourceId: string, data: FeatureCollection) => void;
+
+  layers: Record<string, SupportedLayerSpecification>;
+  layerOrder: string[];
+  addLayer: (layer: SupportedLayerSpecification) => void;
+  updateLayer: (layerId: string, layer: SupportedLayerSpecification) => void;
+  moveLayerUp: (layerId: string) => void;
+  moveLayerDown: (layerId: string) => void;
 };
 
 const initialMapEditorContextState: MapEditorContextState = {
-  layers: {},
   sources: {},
-  setLayerSource: () => {
-    throw new Error("setLayerSource not implemented");
+  addSource: () => {
+    throw new Error("addSource not implemented");
   },
-  setLayerType: () => {
-    throw new Error("setLayerType not implemented");
+  setSourceData: () => {
+    throw new Error("setSourceData not implemented");
   },
-  setLayerMinZoom: () => {
-    throw new Error("setLayerMinZoom not implemented");
+  layers: {},
+  layerOrder: [],
+  addLayer: () => {
+    throw new Error("addLayer not implemented");
   },
-  setLayerMaxZoom: () => {
-    throw new Error("setLayerMaxZoom not implemented");
+  updateLayer: () => {
+    throw new Error("setLayer not implemented");
   },
-  setLayerFilter: () => {
-    throw new Error("setLayerFilter not implemented");
+  moveLayerUp: () => {
+    throw new Error("moveLayerUp not implemented");
   },
-  setLayerPaintProperty: () => {
-    throw new Error("setLayerPaintProperty not implemented");
-  },
-  setLayerLayoutProperty: () => {
-    throw new Error("setLayerLayoutProperty not implemented");
+  moveLayerDown: () => {
+    throw new Error("moveLayerDown not implemented");
   },
 };
 
@@ -80,6 +71,9 @@ export const MapEditorContextProvider: FC<MapEditorContextProviderProps> = ({
   const [layers, setLayers] = useState<
     Record<string, SupportedLayerSpecification>
   >(initialMapEditorContextState.layers);
+  const [layerOrder, setLayerOrder] = useState<string[]>(
+    initialMapEditorContextState.layerOrder
+  );
   const [sources, setSources] = useState<
     Record<string, GeoJSONSourceSpecification>
   >(initialMapEditorContextState.sources);
@@ -93,201 +87,140 @@ export const MapEditorContextProvider: FC<MapEditorContextProviderProps> = ({
     fetcher
   );
 
-  const addSource = (sourceId: string, source: GeoJSONSourceSpecification) => {
+  const addSource = useCallback((sourceId: string) => {
     setSources((prevSources) => ({
       ...prevSources,
-      [sourceId]: source,
+      [sourceId]: {
+        type: "geojson",
+        data: {
+          type: "FeatureCollection",
+          features: [],
+        },
+      },
     }));
-  };
+  }, []);
+
+  const setSourceData = useCallback(
+    (sourceId: string, data: FeatureCollection) => {
+      setSources((prevSources) => {
+        const source = prevSources[sourceId];
+
+        if (!source) {
+          console.error("Source not found");
+          return prevSources;
+        }
+
+        return {
+          ...prevSources,
+          [sourceId]: {
+            ...source,
+            data,
+          },
+        };
+      });
+    },
+    []
+  );
 
   const addLayer = (layer: SupportedLayerSpecification) => {
     setLayers((prevLayers) => ({
       ...prevLayers,
       [layer.id]: layer,
     }));
+    setLayerOrder((prevLayerOrder) => [...prevLayerOrder, layer.id]);
   };
 
-  const setLayerSource = useCallback(
-    (layerId: string, sourceId: string) => {
+  const updateLayerId = useCallback(
+    (oldLayerId: string, newLayerId: string) => {
       setLayers((prevLayers) => {
-        const layer = prevLayers[layerId];
-        const source = sources[sourceId];
+        const layer = prevLayers[oldLayerId];
 
         if (!layer) {
           console.error("Layer not found");
           return prevLayers;
         }
 
-        if (!source) {
-          console.error("Source not found");
-          return prevLayers;
-        }
-
-        return {
-          ...prevLayers,
-          [layerId]: {
-            ...layer,
-            source: sourceId,
-          },
+        const newLayers = { ...prevLayers };
+        delete newLayers[oldLayerId];
+        newLayers[newLayerId] = {
+          ...layer,
+          id: newLayerId,
         };
+
+        return newLayers;
       });
-    },
-    [sources]
-  );
-
-  const setLayerType = useCallback(
-    (layerId: string, layerType: SupportedLayerType) => {
-      setLayers((prevLayers) => {
-        const layer = prevLayers[layerId];
-
-        if (!layer) {
-          console.error("Layer not found");
-          return prevLayers;
-        }
-
-        const initialStyleForLayer = getInitialLayerStyle(
-          layer.id,
-          layer.source,
-          layerType
-        );
-
-        return {
-          ...prevLayers,
-          [layerId]: {
-            ...layer,
-            ...initialStyleForLayer,
-          } as SupportedLayerSpecification,
-        };
+      setLayerOrder((prevLayerOrder) => {
+        const index = prevLayerOrder.indexOf(oldLayerId);
+        const newLayerOrder = [...prevLayerOrder];
+        newLayerOrder[index] = newLayerId;
+        return newLayerOrder;
       });
     },
     []
   );
 
-  const setLayerMinZoom = useCallback((layerId: string, zoom: number) => {
-    setLayers((prevLayers) => {
-      const layer = prevLayers[layerId];
-
-      if (!layer) {
-        console.error("Layer not found");
-        return prevLayers;
+  const updateLayer = useCallback(
+    (layerId: string, layer: SupportedLayerSpecification) => {
+      if (layerId !== layer.id) {
+        updateLayerId(layerId, layer.id);
       }
-
-      return {
-        ...prevLayers,
-        [layerId]: {
-          ...layer,
-          minzoom: zoom,
-        },
-      };
-    });
-  }, []);
-
-  const setLayerMaxZoom = useCallback((layerId: string, zoom: number) => {
-    setLayers((prevLayers) => {
-      const layer = prevLayers[layerId];
-
-      if (!layer) {
-        console.error("Layer not found");
-        return prevLayers;
-      }
-
-      return {
-        ...prevLayers,
-        [layerId]: {
-          ...layer,
-          maxzoom: zoom,
-        },
-      };
-    });
-  }, []);
-
-  const setLayerFilter = useCallback((layerId: string, filter: string) => {
-    setLayers((prevLayers) => {
-      const layer = prevLayers[layerId];
-
-      if (!layer) {
-        console.error("Layer not found");
-        return prevLayers;
-      }
-
-      let parsedFilter: FilterSpecification;
-      try {
-        parsedFilter = JSON.parse(filter) as FilterSpecification;
-      } catch (err) {
-        console.error("Invalid filter");
-        return prevLayers;
-      }
-
-      return {
-        ...prevLayers,
-        [layerId]: {
-          ...layer,
-          filter: parsedFilter,
-        },
-      };
-    });
-  }, []);
-
-  const setLayerPaintProperty = useCallback(
-    (layerId: string, paintProperty: string, value: unknown) => {
       setLayers((prevLayers) => {
-        const layer = prevLayers[layerId];
-
-        if (!layer) {
-          console.error("Layer not found");
-          return prevLayers;
-        }
-
-        return {
-          ...prevLayers,
-          [layerId]: {
-            ...layer,
-            paint: {
-              ...layer.paint,
-              [paintProperty]: value,
-            },
-          },
-        };
+        const newLayers = { ...prevLayers };
+        newLayers[layer.id] = layer;
+        return newLayers;
       });
     },
-    []
+    [updateLayerId]
   );
 
-  const setLayerLayoutProperty = useCallback(
-    (layerId: string, layoutProperty: string, value: unknown) => {
-      setLayers((prevLayers) => {
-        const layer = prevLayers[layerId];
+  const moveLayerUp = useCallback((layerId: string) => {
+    setLayerOrder((layerOrder) => {
+      const index = layerOrder.indexOf(layerId);
+      const newLayerOrder = [...layerOrder];
 
-        if (!layer) {
-          console.error("Layer not found");
-          return prevLayers;
-        }
+      if (index === -1) {
+        return newLayerOrder;
+      }
 
-        return {
-          ...prevLayers,
-          [layerId]: {
-            ...layer,
-            layout: {
-              ...layer.layout,
-              [layoutProperty]: value,
-            },
-          },
-        };
-      });
-    },
-    []
-  );
+      if (index === 0) {
+        newLayerOrder.shift();
+        newLayerOrder.push(layerId);
+        return newLayerOrder;
+      }
+
+      newLayerOrder[index] = newLayerOrder[index - 1]!;
+      newLayerOrder[index - 1] = layerId;
+      return newLayerOrder;
+    });
+  }, []);
+
+  const moveLayerDown = useCallback((layerId: string) => {
+    setLayerOrder((layerOrder) => {
+      const index = layerOrder.indexOf(layerId);
+      const newLayerOrder = [...layerOrder];
+
+      if (index === -1) {
+        return newLayerOrder;
+      }
+
+      if (index === newLayerOrder.length - 1) {
+        newLayerOrder.pop();
+        newLayerOrder.unshift(layerId);
+        return newLayerOrder;
+      }
+
+      newLayerOrder[index] = newLayerOrder[index + 1]!;
+      newLayerOrder[index + 1] = layerId;
+      return newLayerOrder;
+    });
+  }, []);
 
   useEffect(() => {
     if (dcMetroLines.data && dcMetroStations.data) {
-      addSource("dc-metro-lines", {
-        type: "geojson",
-        data: dcMetroLines.data,
-      });
-      addSource("dc-metro-stations", {
-        type: "geojson",
-        data: dcMetroStations.data,
-      });
+      addSource("dc-metro-lines");
+      setSourceData("dc-metro-lines", dcMetroLines.data);
+      addSource("dc-metro-stations");
+      setSourceData("dc-metro-stations", dcMetroStations.data);
 
       addLayer(
         getInitialLayerStyle("dc-metro-lines", "dc-metro-lines", "line")
@@ -296,20 +229,20 @@ export const MapEditorContextProvider: FC<MapEditorContextProviderProps> = ({
         getInitialLayerStyle("dc-metro-stations", "dc-metro-stations", "circle")
       );
     }
-  }, [dcMetroLines.data, dcMetroStations.data]);
+  }, [dcMetroLines.data, dcMetroStations.data, addSource, setSourceData]);
 
   return (
     <MapEditorContext.Provider
       value={{
-        layers,
         sources,
-        setLayerSource,
-        setLayerType,
-        setLayerMinZoom,
-        setLayerMaxZoom,
-        setLayerFilter,
-        setLayerPaintProperty,
-        setLayerLayoutProperty,
+        addSource,
+        setSourceData,
+        layers,
+        layerOrder,
+        addLayer,
+        updateLayer,
+        moveLayerUp,
+        moveLayerDown,
       }}
     >
       {children}

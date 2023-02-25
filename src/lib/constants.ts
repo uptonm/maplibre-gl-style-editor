@@ -35,6 +35,7 @@ export const InitialFillLayerStyle: SupportedLayerSpecification = {
   id: "fill",
   source: "fill",
   type: "fill",
+  layout: {},
   paint: {
     "fill-color": "#088",
     "fill-opacity": 0.8,
@@ -62,6 +63,7 @@ export const InitialCircleLayerStyle: SupportedLayerSpecification = {
   id: "circle",
   source: "circle",
   type: "circle",
+  layout: {},
   paint: {
     "circle-radius": 10,
     "circle-color": "#f00",

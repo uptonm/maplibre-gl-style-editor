@@ -1,5 +1,5 @@
 import { bbox, featureCollection } from "@turf/turf";
-import { LineLayerSpecification, LngLatBounds } from "maplibre-gl";
+import { LngLatBounds } from "maplibre-gl";
 import {
   InitialCircleLayerStyle,
   InitialFillLayerStyle,
@@ -96,7 +96,7 @@ export function getLayerPaintProperties(
   }
 }
 
-type PropertyValue =
+export type PropertyValue =
   | { type: "string"; default: string }
   | { type: "color"; default: string }
   | { type: "boolean"; default: boolean }

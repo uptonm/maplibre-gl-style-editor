@@ -1,8 +1,4 @@
-import {
-  GeoJSONSource,
-  GeoJSONSourceSpecification,
-  Map as MapGL,
-} from "maplibre-gl";
+import { GeoJSONSource, Map as MapGL } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -15,7 +11,7 @@ export const Map = () => {
   const [mapGLLoaded, setMapGLLoaded] = useState<boolean>(false);
   const [mapGLStyleLoaded, setMapGLStyleLoaded] = useState<boolean>(false);
 
-  const { layers, sources } = useMapEditorContext();
+  const { layers, layerOrder, sources } = useMapEditorContext();
 
   const extents = useMemo(() => {
     const features: GeoJSON.Feature[] = [];
@@ -60,7 +56,8 @@ export const Map = () => {
           mapGLRef.current!.addSource(sourceId, source);
         }
       });
-      Object.entries(layers).forEach(([layerId, layer]) => {
+      layerOrder.forEach((layerId) => {
+        const layer = layers[layerId]!;
         const existingLayer = mapGLRef.current!.getLayer(layerId);
         if (existingLayer) {
           mapGLRef.current!.removeLayer(layerId);
@@ -68,7 +65,7 @@ export const Map = () => {
         mapGLRef.current!.addLayer(layer);
       });
     }
-  }, [sources, layers, mapGLLoaded, mapGLStyleLoaded]);
+  }, [sources, layers, mapGLLoaded, mapGLStyleLoaded, layerOrder]);
 
   useEffect(() => {
     if (mapGLRef.current && mapGLLoaded && mapGLStyleLoaded && extents) {
