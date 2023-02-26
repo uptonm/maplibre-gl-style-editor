@@ -2,6 +2,7 @@ import { Tab } from "@headlessui/react";
 import classNames from "classnames";
 import { type NextPage } from "next";
 import Head from "next/head";
+import { Tooltip } from "react-tooltip";
 import { LayersPanel } from "../components/LayerPanel";
 import { Map } from "../components/Map";
 import { SourcePanel } from "../components/SourcePanel";
@@ -33,9 +34,7 @@ const Home: NextPage = () => {
                     classNames(
                       "w-full rounded-lg py-2.5 text-sm font-medium leading-5 text-slate-700",
                       "ring-white ring-opacity-60 ring-offset-2 ring-offset-slate-400 focus:outline-none focus:ring-2",
-                      selected
-                        ? "bg-white shadow"
-                        : "text-slate-100 hover:bg-white/[0.12] hover:text-white"
+                      selected ? "bg-white shadow" : "hover:bg-white/[0.25]"
                     )
                   }
                 >
@@ -61,6 +60,7 @@ const Home: NextPage = () => {
         <main role="main" className="h-full w-full">
           <Map />
         </main>
+        <Tooltip id="action-icon-tooltip" />
       </div>
     </>
   );

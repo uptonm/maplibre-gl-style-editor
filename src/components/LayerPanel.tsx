@@ -23,9 +23,7 @@ import { DebouncedTextInput } from "./inputs/DebouncedTextInput";
 export const LayersPanel = () => {
   const { layers, sources, layerOrder, addLayer } = useMapEditorContext();
 
-  const [editingLayerIndex, setEditingLayerIndex] = useState<number | null>(
-    null
-  );
+  const [editingLayerId, setEditingLayerId] = useState<string | null>(null);
 
   return (
     <div className="w-lg h-full">
@@ -59,14 +57,14 @@ export const LayersPanel = () => {
         </button>
       </div>
       <div className="space-y-4 pt-2">
-        {layerOrder.map((layerId, layerIndex) => (
+        {layerOrder.map((layerId) => (
           <LayerEditor
-            key={layerIndex}
+            key={layerId}
             layerId={layerId}
             layer={layers[layerId]!}
-            isEditing={layerIndex === editingLayerIndex}
+            isEditing={layerId === editingLayerId}
             setIsEditing={(isEditing: boolean) =>
-              setEditingLayerIndex(isEditing ? layerIndex : null)
+              setEditingLayerId(isEditing ? layerId : null)
             }
           />
         ))}
@@ -94,13 +92,13 @@ const LayerEditor = ({
   const [currentLayerSpecification, setCurrentLayerSpecification] =
     useState<SupportedLayerSpecification>(layer);
 
-  const setLayerId = useCallback((id: string) => {
-    console.log("setLayerId", id);
-    setCurrentLayerSpecification((prevLayer) => ({
-      ...prevLayer,
-      id,
-    }));
-  }, []);
+  // const setLayerId = useCallback((id: string) => {
+  //   console.log("setLayerId", id);
+  //   setCurrentLayerSpecification((prevLayer) => ({
+  //     ...prevLayer,
+  //     id,
+  //   }));
+  // }, []);
 
   const setLayerSource = useCallback((sourceId: string) => {
     setCurrentLayerSpecification((prevLayer) => ({
@@ -192,11 +190,12 @@ const LayerEditor = ({
   if (isEditing) {
     return (
       <div key={layerId} className="flex flex-col space-y-1">
-        <div className="flex items-center">
-          <DebouncedTextInput
+        <div className="flex items-center justify-between">
+          {/* <DebouncedTextInput
             onChange={setLayerId}
             value={currentLayerSpecification.id}
-          />
+          /> */}
+          <h4 className="text-md font-semibold">{layerId}</h4>
           <button
             type="button"
             data-tooltip-id="action-icon-tooltip"

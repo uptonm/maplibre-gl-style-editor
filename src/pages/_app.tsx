@@ -1,5 +1,4 @@
 import { type AppType } from "next/dist/shared/lib/utils";
-import { Tooltip } from "react-tooltip";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { MapEditorContextProvider } from "../context/MapEditorContext";
 
@@ -10,7 +9,6 @@ const MyApp: AppType = ({ Component, pageProps }) => {
     <ErrorBoundary>
       <MapEditorContextProvider>
         <Component {...pageProps} />
-        <Tooltip id="action-icon-tooltip" />
       </MapEditorContextProvider>
     </ErrorBoundary>
   );
