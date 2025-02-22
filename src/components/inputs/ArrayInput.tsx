@@ -1,3 +1,5 @@
+"use client";
+
 type ArrayInputProps = {
   label: string;
   value: string[];

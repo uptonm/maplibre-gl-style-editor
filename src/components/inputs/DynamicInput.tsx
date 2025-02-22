@@ -1,12 +1,15 @@
-import { PropertyValue } from "../../lib/utils";
-import { CheckboxInput } from "./CheckboxInput";
-import { ColorInput } from "./ColorInput";
-import { SelectInput } from "./SelectInput";
-import { SliderInput } from "./SliderInput";
-import { TextInput } from "./TextInput";
-import { TupleInput } from "./TupleInput";
+"use client";
+
+import { PropertyValue } from "~/lib/map-utils";
+import { CheckboxInput } from "~/components/inputs/CheckboxInput";
+import { ColorInput } from "~/components/inputs/ColorInput";
+import { SelectInput } from "~/components/inputs/SelectInput";
+import { SliderInput } from "~/components/inputs/SliderInput";
+import { TextInput } from "~/components/inputs/TextInput";
+import { TupleInput } from "~/components/inputs/TupleInput";
 
 type DynamicInputProps<T = unknown> = {
+  id: string;
   label: string;
   currentValue: T;
   propertyValue: PropertyValue;
@@ -14,6 +17,7 @@ type DynamicInputProps<T = unknown> = {
 };
 
 export function DynamicInput<T = unknown>({
+  id,
   label,
   currentValue,
   propertyValue,
@@ -23,6 +27,7 @@ export function DynamicInput<T = unknown>({
     case "string": {
       return (
         <TextInput
+          id={id}
           label={label}
           value={currentValue as string}
           onChange={(value) => onChange(value as T)}
@@ -32,6 +37,7 @@ export function DynamicInput<T = unknown>({
     case "enum": {
       return (
         <SelectInput
+          id={id}
           label={label}
           value={currentValue as string}
           options={propertyValue.values}
@@ -42,6 +48,7 @@ export function DynamicInput<T = unknown>({
     case "number": {
       return (
         <SliderInput
+          id={id}
           label={label}
           value={+currentValue}
           min={propertyValue.min}
@@ -54,6 +61,7 @@ export function DynamicInput<T = unknown>({
     case "color": {
       return (
         <ColorInput
+          id={id}
           label={label}
           value={currentValue as string}
           onChange={(value) => onChange(value as T)}
@@ -72,6 +80,7 @@ export function DynamicInput<T = unknown>({
     case "tuple": {
       return (
         <TupleInput
+          id={id}
           label={label}
           value={currentValue as number[]}
           labels={propertyValue.types.map(({ name }) => name)}

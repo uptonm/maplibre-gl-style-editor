@@ -1,3 +1,5 @@
+"use client";
+
 type CheckboxInputProps = {
   label: string;
   value: boolean;

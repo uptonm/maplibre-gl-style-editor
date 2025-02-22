@@ -1,4 +1,10 @@
+"use client";
+
+import { Label } from "../ui/label";
+import { Slider } from "../ui/slider";
+
 type SliderInputProps = {
+  id: string;
   label: string;
   value: number;
   min?: number;
@@ -8,6 +14,7 @@ type SliderInputProps = {
 };
 
 export const SliderInput = ({
+  id,
   label,
   value,
   min = 0,
@@ -16,16 +23,17 @@ export const SliderInput = ({
   onChange,
 }: SliderInputProps) => {
   return (
-    <label className="flex items-center justify-between">
-      <span>{label}</span>
-      <input
-        type="range"
+    <div className="flex items-center justify-between">
+      <Label htmlFor={id}>{label}</Label>
+      <Slider
+        id={id}
         min={min}
         max={max}
         step={step}
-        value={value}
-        onChange={(e) => onChange(+e.target.value)}
+        value={[value]}
+        onValueChange={(value) => onChange(value[0]!)}
+        className="w-36"
       />
-    </label>
+    </div>
   );
 };

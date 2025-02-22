@@ -1,4 +1,10 @@
+"use client";
+
+import { Label } from "../ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "../ui/select";
+
 type SelectInputProps = {
+  id: string;
   label: string;
   value: string;
   options: string[];
@@ -6,21 +12,25 @@ type SelectInputProps = {
 };
 
 export const SelectInput = ({
+  id,
   label,
   value,
   options,
   onChange,
 }: SelectInputProps) => {
   return (
-    <label className="flex items-center justify-between">
-      <span>{label}</span>
-      <select value={value} onChange={(e) => onChange(e.target.value)}>
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </select>
-    </label>
+    <div className="flex items-center justify-between">
+      <Label htmlFor={id}>{label}</Label>
+      <Select value={value} onValueChange={(value) => onChange(value)}>
+        <SelectTrigger className="max-w-36">{value}</SelectTrigger>
+        <SelectContent className="max-w-36">
+          {options.map((option) => (
+            <SelectItem key={option} value={option}>
+              {option}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 };
