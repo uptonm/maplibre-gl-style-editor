@@ -5,7 +5,6 @@ import { type Metadata } from "next";
 import { Analytics } from "@vercel/analytics/react";
 
 import { TRPCReactProvider } from "~/trpc/react";
-import { MapEditorContextProvider } from "~/contexts/MapContext";
 import { TooltipProvider } from "~/components/ui/tooltip";
 
 export const metadata: Metadata = {
@@ -18,12 +17,14 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${GeistSans.variable}`}>
+    <html
+      lang="en"
+      className={`${GeistSans.variable}`}
+      suppressHydrationWarning
+    >
       <body className="h-screen w-screen overflow-hidden">
         <TRPCReactProvider>
-          <MapEditorContextProvider>
-            <TooltipProvider>{children}</TooltipProvider>
-          </MapEditorContextProvider>
+          <TooltipProvider>{children}</TooltipProvider>
         </TRPCReactProvider>
         <Analytics />
       </body>

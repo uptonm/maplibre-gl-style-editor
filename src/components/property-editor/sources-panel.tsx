@@ -1,16 +1,23 @@
 "use client";
 
+import { use$ } from "@legendapp/state/react";
 import { useCallback, useState } from "react";
-import { useMapEditorContext } from "~/contexts/MapContext";
+import { mapStore$ } from "~/contexts/MapStore";
+import { enableReactUse } from "@legendapp/state/config/enableReactUse";
+
+enableReactUse();
 
 export function SourcesPanel() {
-  const { sources, addSource, setSourceData } = useMapEditorContext();
+  const sources = use$(mapStore$.sources);
   const [sourceName, setSourceName] = useState("");
 
   const handleAddSource = useCallback(() => {
-    addSource(sourceName);
+    mapStore$.addSource(sourceName, {
+      type: "FeatureCollection",
+      features: [],
+    });
     setSourceName("");
-  }, [addSource, sourceName]);
+  }, [sourceName]);
 
   return (
     <div className="w-lg h-full">

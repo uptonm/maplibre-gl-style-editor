@@ -1,12 +1,16 @@
 "use client";
 
-import { GeoJSONSource, Map as MapGL } from "maplibre-gl";
+import { GeoJSONSource, LngLatBounds, Map as MapGL } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { mapStore$ } from "~/contexts/MapStore";
 
-import { useMapEditorContext } from "~/contexts/MapContext";
+import { use$ } from "@legendapp/state/react";
+import { api } from "~/trpc/react";
+import { enableReactUse } from "@legendapp/state/config/enableReactUse";
 import { env } from "~/env";
-import { calculateExtentsOfFeatures } from "~/lib/map-utils";
+
+enableReactUse();
 
 export function MapViewer() {
   const mapGLRef = useRef<MapGL>();
@@ -14,25 +18,38 @@ export function MapViewer() {
   const [mapGLLoaded, setMapGLLoaded] = useState<boolean>(false);
   const [mapGLStyleLoaded, setMapGLStyleLoaded] = useState<boolean>(false);
 
-  const { layers, layerOrder, sources } = useMapEditorContext();
+  const isInitialized = use$(mapStore$.isInitialized);
+  const sources = use$(mapStore$.sources);
+  const layers = use$(mapStore$.layers);
+  const layerOrder = use$(mapStore$.layerOrder);
+  const bounds = use$(() => mapStore$.bounds.get());
 
-  const extents = useMemo(() => {
-    const features: GeoJSON.Feature[] = [];
-    Object.values(sources).forEach((source) => {
-      if (source.data) {
-        features.push(...(source.data as GeoJSON.FeatureCollection).features);
-      }
-    });
-    return calculateExtentsOfFeatures(features);
-  }, [sources]);
+  const dcMetroLines = api.source.getSource.useQuery({
+    id: "lines",
+  });
+  const dcMetroStations = api.source.getSource.useQuery({
+    id: "stations",
+  });
+
+  const hasInitializedSources = useRef(false);
+  useEffect(() => {
+    if (
+      !dcMetroLines.data ||
+      !dcMetroStations.data ||
+      hasInitializedSources.current
+    ) {
+      return;
+    }
+
+    hasInitializedSources.current = true;
+    mapStore$.__initialize(dcMetroLines.data, dcMetroStations.data);
+  }, [dcMetroLines, dcMetroStations]);
 
   useEffect(() => {
     if (mapContainerRef.current === null) return;
 
     mapGLRef.current = new MapGL({
-      style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${
-        env.NEXT_PUBLIC_MAPTILER_API_KEY
-      }`,
+      style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${env.NEXT_PUBLIC_MAPTILER_API_KEY}`,
       container: mapContainerRef.current,
       center: [-74.5, 40], // starting position [lng, lat]
       zoom: 9, // starting zoom
@@ -69,12 +86,21 @@ export function MapViewer() {
   }, [sources, layers, mapGLLoaded, mapGLStyleLoaded, layerOrder]);
 
   useEffect(() => {
-    if (mapGLRef.current && mapGLLoaded && mapGLStyleLoaded && extents) {
-      mapGLRef.current.fitBounds(extents, {
-        padding: 50,
-      });
+    if (
+      mapGLRef.current &&
+      mapGLLoaded &&
+      mapGLStyleLoaded &&
+      bounds &&
+      isInitialized
+    ) {
+      mapGLRef.current.fitBounds(
+        new LngLatBounds([bounds[0], bounds[1]], [bounds[2], bounds[3]]),
+        {
+          padding: 50,
+        },
+      );
     }
-  }, [extents, mapGLLoaded, mapGLStyleLoaded]);
+  }, [bounds, mapGLLoaded, mapGLStyleLoaded, isInitialized]);
 
   return (
     <div

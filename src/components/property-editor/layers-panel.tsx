@@ -1,6 +1,33 @@
 "use client";
 
-import { useMapEditorContext } from "~/contexts/MapContext";
+import { use$ } from "@legendapp/state/react";
+import { Accordion } from "@radix-ui/react-accordion";
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  PencilIcon,
+  PlusIcon,
+  RefreshCwIcon,
+  XIcon,
+} from "lucide-react";
+import { type FilterSpecification } from "maplibre-gl";
+import { useCallback, useEffect, useState } from "react";
+import { DynamicInput } from "~/components/inputs/DynamicInput";
+import { SelectInput } from "~/components/inputs/SelectInput";
+import { SliderInput } from "~/components/inputs/SliderInput";
+import { TextInput } from "~/components/inputs/TextInput";
+import {
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "~/components/ui/accordion";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
+import { H3 } from "~/components/ui/typography";
+import { mapStore$ } from "~/contexts/MapStore";
 import { SupportedLayerTypes } from "~/lib/map-constants";
 import type {
   SupportedLayerSpecification,
@@ -13,32 +40,20 @@ import {
   getLayerPaintProperties,
   getLayerPaintPropertyValue,
 } from "~/lib/map-utils";
-import { DynamicInput } from "~/components/inputs/DynamicInput";
-import { SelectInput } from "~/components/inputs/SelectInput";
-import { SliderInput } from "~/components/inputs/SliderInput";
-import { TextInput } from "~/components/inputs/TextInput";
-import { useCallback, useEffect, useState } from "react";
-import { FilterSpecification } from "maplibre-gl";
-import { H2, H3, H4 } from "~/components/ui/typography";
-import { Button } from "../ui/button";
-import {
-  ArrowDownIcon,
-  ArrowUpIcon,
-  PencilIcon,
-  PlusIcon,
-  RefreshCwIcon,
-  XIcon,
-} from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { Button } from "~/components/ui/button";
+import { enableReactUse } from "@legendapp/state/config/enableReactUse";
+
+enableReactUse();
 
 export function LayersPanel() {
-  const { layers, sources, layerOrder, addLayer, resetLayers } =
-    useMapEditorContext();
+  const layers = use$(mapStore$.layers);
+  const sources = use$(mapStore$.sources);
+  const layerOrder = use$(mapStore$.layerOrder);
 
   const [editingLayerId, setEditingLayerId] = useState<string | null>(null);
 
   const handleAddLayer = () => {
-    addLayer(
+    mapStore$.addLayer(
       getInitialLayerStyle(
         `layer-${layerOrder.length}`,
         Object.keys(sources)[0]!,
@@ -48,8 +63,8 @@ export function LayersPanel() {
   };
 
   return (
-    <div className="flex h-full flex-col space-y-2 pb-4 pr-4">
-      <div className="flex flex-grow flex-col space-y-4 overflow-y-auto pt-2">
+    <div className="flex h-full flex-col space-y-2">
+      <div className="flex flex-grow flex-col space-y-4 overflow-y-auto p-4">
         {layerOrder.map((layerId) => (
           <LayerEditor
             key={layerId}
@@ -62,8 +77,12 @@ export function LayersPanel() {
           />
         ))}
       </div>
-      <div className="flex items-center space-x-2">
-        <Button variant="destructive" onClick={resetLayers} className="w-1/2">
+      <div className="flex items-center space-x-2 border-t p-4">
+        <Button
+          variant="destructive"
+          onClick={mapStore$.resetLayers}
+          className="w-1/2"
+        >
           <RefreshCwIcon className="size-4" />
           Reset All
         </Button>
@@ -89,8 +108,7 @@ const LayerEditor = ({
   isEditing,
   setIsEditing,
 }: LayerEditorProps) => {
-  const { sources, updateLayer, moveLayerUp, moveLayerDown } =
-    useMapEditorContext();
+  const sources = use$(mapStore$.sources);
 
   const [currentLayerSpecification, setCurrentLayerSpecification] =
     useState<SupportedLayerSpecification>(layer);
@@ -177,10 +195,10 @@ const LayerEditor = ({
 
   useEffect(() => {
     if (layer !== currentLayerSpecification) {
-      updateLayer(layerId, currentLayerSpecification);
+      mapStore$.updateLayer(layerId, currentLayerSpecification);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentLayerSpecification, updateLayer]);
+  }, [currentLayerSpecification]);
 
   if (isEditing) {
     return (
@@ -201,100 +219,110 @@ const LayerEditor = ({
             <TooltipContent alignOffset={10}>Stop Editing</TooltipContent>
           </Tooltip>
         </div>
-        <div className="flex flex-col space-y-1 pl-2">
-          <H4>Metadata</H4>
-          <div className="flex flex-col space-y-4 pl-2">
-            <SelectInput
-              id={`${layerId}:source`}
-              value={layer.source}
-              label="Source"
-              options={Object.keys(sources)}
-              onChange={(value) => setLayerSource(value)}
-            />
-
-            <SelectInput
-              id={`${layerId}:type`}
-              value={layer.type}
-              label="Type"
-              options={SupportedLayerTypes}
-              onChange={(value) => setLayerType(value as SupportedLayerType)}
-            />
-
-            <SliderInput
-              id={`${layerId}:minzoom`}
-              value={layer.minzoom ?? 0}
-              label={`Min Zoom (${layer.minzoom ?? 0})`}
-              max={24}
-              onChange={(value) => setLayerMinZoom(value)}
-            />
-
-            <SliderInput
-              id={`${layerId}:maxzoom`}
-              value={layer.maxzoom ?? 24}
-              label={`Max Zoom (${layer.maxzoom ?? 24})`}
-              max={24}
-              onChange={(value) => setLayerMaxZoom(value)}
-            />
-
-            <TextInput
-              id={`${layerId}:filter`}
-              value={JSON.stringify(layer.filter)}
-              label="Filter"
-              onChange={(value) => setLayerFilter(value)}
-            />
-          </div>
-
-          <label htmlFor="paint" className="font-semibold">
-            Paint Properties
-          </label>
-          <div id="paint" className="flex flex-col space-y-4 pl-2">
-            {getLayerPaintProperties(layer.type).map((paintKey) => {
-              const propertyKey = `${layerId}:paint_property:${paintKey}`;
-              const propertyValue = getLayerPaintPropertyValue(
-                layer.type,
-                paintKey,
-              );
-              const currentValue =
-                layer.paint?.[paintKey as keyof typeof layer.paint] ??
-                propertyValue!.default;
-              return (
-                <DynamicInput
-                  key={propertyKey}
-                  id={propertyKey}
-                  currentValue={currentValue}
-                  propertyValue={propertyValue!}
-                  label={`${paintKey} (${currentValue.toString()})`}
-                  onChange={(value) => setLayerPaintProperty(paintKey, value)}
+        <div className="flex flex-col pl-2">
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="metadata">
+              <AccordionTrigger>Metadata</AccordionTrigger>
+              <AccordionContent className="flex flex-col space-y-4 py-2 pl-2">
+                <SelectInput
+                  id={`${layerId}:source`}
+                  value={layer.source}
+                  label="Source"
+                  options={Object.keys(sources)}
+                  onChange={(value) => setLayerSource(value)}
                 />
-              );
-            })}
-          </div>
 
-          <label htmlFor="layout" className="font-semibold">
-            Layout Properties
-          </label>
-          <div id="layout" className="flex flex-col space-y-4 pl-2">
-            {getLayerLayoutProperties(layer.type).map((layoutKey) => {
-              const propertyKey = `${layerId}:layout_property:${layoutKey}`;
-              const propertyValue = getLayerLayoutPropertyValue(
-                layer.type,
-                layoutKey,
-              );
-              const currentValue =
-                layer.layout?.[layoutKey as keyof typeof layer.layout] ??
-                propertyValue!.default;
-              return (
-                <DynamicInput
-                  key={propertyKey}
-                  id={propertyKey}
-                  currentValue={currentValue}
-                  propertyValue={propertyValue!}
-                  label={`${layoutKey} (${currentValue.toString()})`}
-                  onChange={(value) => setLayerLayoutProperty(layoutKey, value)}
+                <SelectInput
+                  id={`${layerId}:type`}
+                  value={layer.type}
+                  label="Type"
+                  options={SupportedLayerTypes}
+                  onChange={(value) =>
+                    setLayerType(value as SupportedLayerType)
+                  }
                 />
-              );
-            })}
-          </div>
+
+                <SliderInput
+                  id={`${layerId}:minzoom`}
+                  value={layer.minzoom ?? 0}
+                  label={`Min Zoom (${layer.minzoom ?? 0})`}
+                  max={24}
+                  onChange={(value) => setLayerMinZoom(value)}
+                />
+
+                <SliderInput
+                  id={`${layerId}:maxzoom`}
+                  value={layer.maxzoom ?? 24}
+                  label={`Max Zoom (${layer.maxzoom ?? 24})`}
+                  max={24}
+                  onChange={(value) => setLayerMaxZoom(value)}
+                />
+
+                <TextInput
+                  id={`${layerId}:filter`}
+                  value={JSON.stringify(layer.filter)}
+                  label="Filter"
+                  onChange={(value) => setLayerFilter(value)}
+                />
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="paint">
+              <AccordionTrigger>Paint Properties</AccordionTrigger>
+              <AccordionContent className="flex flex-col space-y-4 py-2 pl-2">
+                {getLayerPaintProperties(layer.type).map((paintKey) => {
+                  const propertyKey = `${layerId}:paint_property:${paintKey}`;
+                  const propertyValue = getLayerPaintPropertyValue(
+                    layer.type,
+                    paintKey,
+                  );
+                  const currentValue =
+                    layer.paint?.[paintKey as keyof typeof layer.paint] ??
+                    propertyValue!.default;
+                  return (
+                    <DynamicInput
+                      key={propertyKey}
+                      id={propertyKey}
+                      currentValue={currentValue}
+                      propertyValue={propertyValue!}
+                      label={`${paintKey} (${currentValue.toString()})`}
+                      onChange={(value) =>
+                        setLayerPaintProperty(paintKey, value)
+                      }
+                    />
+                  );
+                })}
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="layout">
+              <AccordionTrigger>Layout Properties</AccordionTrigger>
+              <AccordionContent className="flex flex-col space-y-4 py-2 pl-2">
+                {getLayerLayoutProperties(layer.type).map((layoutKey) => {
+                  const propertyKey = `${layerId}:layout_property:${layoutKey}`;
+                  const propertyValue = getLayerLayoutPropertyValue(
+                    layer.type,
+                    layoutKey,
+                  );
+                  const currentValue =
+                    layer.layout?.[layoutKey as keyof typeof layer.layout] ??
+                    propertyValue!.default;
+                  return (
+                    <DynamicInput
+                      key={propertyKey}
+                      id={propertyKey}
+                      currentValue={currentValue}
+                      propertyValue={propertyValue!}
+                      label={`${layoutKey} (${currentValue.toString()})`}
+                      onChange={(value) =>
+                        setLayerLayoutProperty(layoutKey, value)
+                      }
+                    />
+                  );
+                })}
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
       </div>
     );
@@ -309,7 +337,7 @@ const LayerEditor = ({
             <Button
               variant="secondary"
               size="xs"
-              onClick={() => moveLayerUp(layerId)}
+              onClick={() => mapStore$.moveLayerUp(layerId)}
             >
               <ArrowUpIcon className="size-4" />
               <span className="sr-only">Move Layer Up</span>
@@ -323,7 +351,7 @@ const LayerEditor = ({
             <Button
               variant="secondary"
               size="xs"
-              onClick={() => moveLayerDown(layerId)}
+              onClick={() => mapStore$.moveLayerDown(layerId)}
             >
               <ArrowDownIcon className="size-4" />
               <span className="sr-only">Move Layer Down</span>

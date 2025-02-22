@@ -28,15 +28,6 @@ export function getInitialLayerStyle(
   }
 }
 
-export function calculateExtentsOfFeatures(
-  features: GeoJSON.Feature[],
-): LngLatBounds | undefined {
-  if (!features.length) return undefined;
-
-  const box = bbox(featureCollection(features));
-  return new LngLatBounds([box[0], box[1]], [box[2], box[3]]);
-}
-
 export function getLayerPaintProperties(
   layerType: SupportedLayerType,
 ): string[] {
