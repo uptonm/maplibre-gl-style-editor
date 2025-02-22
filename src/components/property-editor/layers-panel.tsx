@@ -223,7 +223,7 @@ const LayerEditor = ({
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="metadata">
               <AccordionTrigger>Metadata</AccordionTrigger>
-              <AccordionContent className="flex flex-col space-y-4 py-2 pl-2">
+              <AccordionContent className="flex flex-col space-y-4 px-2 py-2">
                 <SelectInput
                   id={`${layerId}:source`}
                   value={layer.source}
@@ -269,7 +269,7 @@ const LayerEditor = ({
 
             <AccordionItem value="paint">
               <AccordionTrigger>Paint Properties</AccordionTrigger>
-              <AccordionContent className="flex flex-col space-y-4 py-2 pl-2">
+              <AccordionContent className="flex flex-col space-y-4 px-2 py-2">
                 {getLayerPaintProperties(layer.type).map((paintKey) => {
                   const propertyKey = `${layerId}:paint_property:${paintKey}`;
                   const propertyValue = getLayerPaintPropertyValue(
@@ -297,7 +297,7 @@ const LayerEditor = ({
 
             <AccordionItem value="layout">
               <AccordionTrigger>Layout Properties</AccordionTrigger>
-              <AccordionContent className="flex flex-col space-y-4 py-2 pl-2">
+              <AccordionContent className="flex flex-col space-y-4 px-2 py-2">
                 {getLayerLayoutProperties(layer.type).map((layoutKey) => {
                   const propertyKey = `${layerId}:layout_property:${layoutKey}`;
                   const propertyValue = getLayerLayoutPropertyValue(
