@@ -4,8 +4,8 @@ import { PropertyEditor } from "~/components/property-editor";
 import { api, HydrateClient } from "~/trpc/server";
 
 export default async function HomePage() {
-  void api.source.getSource.prefetch({ id: "lines" });
-  void api.source.getSource.prefetch({ id: "stations" });
+  await api.source.getSource.prefetch({ id: "lines" });
+  await api.source.getSource.prefetch({ id: "stations" });
 
   return (
     <HydrateClient>
