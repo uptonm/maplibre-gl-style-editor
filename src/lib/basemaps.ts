@@ -69,7 +69,10 @@ const BLANK_STYLE: StyleSpecification = {
 };
 
 export function envMaptilerKey(): string {
-  return import.meta.env?.BUN_PUBLIC_MAPTILER_API_KEY ?? "";
+  // Must stay a plain process.env member access: that's the only pattern
+  // Bun.build's env option statically inlines. import.meta.env and optional
+  // chaining both survive to the browser, where they resolve to nothing.
+  return process.env.BUN_PUBLIC_MAPTILER_API_KEY ?? "";
 }
 
 export function resolveBasemapStyle(
