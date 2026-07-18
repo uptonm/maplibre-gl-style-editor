@@ -1,29 +1,52 @@
-# Create T3 App
+# MapLibre GL Style Editor
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+A browser-based editor for exploring and changing MapLibre layer styles with a live map preview.
 
-## What's next? How do I make an app with this?
+[Open the live editor](https://map.uptonm.dev/)
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+![The editor showing Washington, DC Metro lines and stations on a MapLibre map](public/screenshots/editor-overview.jpg)
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+## What it does
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+- Updates MapLibre paint, layout, metadata, zoom, and filter properties in real time.
+- Supports line, fill, symbol, and circle layers.
+- Chooses an appropriate control for each property, including colors, sliders, selects, tuples, text, and expressions.
+- Adds, reorders, edits, and resets layers without manually editing a style document.
+- Persists the current layer state in local storage between visits.
+- Fits the map to the loaded GeoJSON data and ships with Washington, DC Metro data as a working example.
 
-## Learn More
+![Layer paint controls updating the live map](public/screenshots/layer-properties.jpg)
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+## Current scope
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+The layer editor is functional and deployed. The Sources panel is still a work in progress; the public demo currently loads the bundled DC Metro GeoJSON sources.
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+## Built with
 
-## How do I deploy this?
+- Next.js, React, and TypeScript
+- MapLibre GL JS and Turf
+- Legend-State for reactive state and local persistence
+- Tailwind CSS and Radix UI
+- tRPC and TanStack Query
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+## Run locally
+
+You need a [MapTiler](https://www.maptiler.com/) API key for the basemap.
+
+```bash
+pnpm install
+```
+
+Create `.env.local`:
+
+```bash
+NEXT_PUBLIC_MAPTILER_API_KEY=your_key_here
+```
+
+Start the development server:
+
+```bash
+pnpm dev
+```
+
+Then open [http://localhost:3000](http://localhost:3000).
