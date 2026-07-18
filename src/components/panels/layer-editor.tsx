@@ -24,6 +24,7 @@ import {
   layoutProperties,
   paintProperties,
   SUPPORTED_LAYER_TYPES,
+  validateFilter,
 } from "~/lib/style-spec";
 
 function LayerIdInput({ layer }: { layer: EditorLayer }) {
@@ -186,6 +187,7 @@ export function LayerEditor({ layer }: { layer: EditorLayer }) {
           value={layer.filter}
           rows={2}
           placeholder='e.g. ["==", ["get", "LINE"], "red"]'
+          validate={validateFilter}
           onChange={(filter) =>
             updateLayer(layer.id, { filter: filter as EditorLayer["filter"] })
           }

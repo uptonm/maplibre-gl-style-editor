@@ -1,5 +1,5 @@
 import { BracesIcon, RotateCcwIcon } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { JsonEditor } from "~/components/json-editor";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -19,6 +19,10 @@ import {
 } from "~/components/ui/tooltip";
 import { cn } from "~/lib/cn";
 import type { PropertyDescriptor } from "~/lib/style-spec";
+import {
+  isExpressionValue,
+  validatePropertyExpression,
+} from "~/lib/style-spec";
 
 type PropertyInputProps = {
   name: string;
@@ -28,12 +32,6 @@ type PropertyInputProps = {
 };
 
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
-
-function isScalarKind(descriptor: PropertyDescriptor): boolean {
-  return ["number", "color", "boolean", "enum", "string"].includes(
-    descriptor.kind,
-  );
-}
 
 function NumberEditor({
   descriptor,
@@ -266,6 +264,34 @@ function Editor({
   }
 }
 
+function expressionPlaceholder(descriptor: PropertyDescriptor): string {
+  const parameters = descriptor.expression?.parameters ?? [];
+  if (parameters.includes("feature")) return 'e.g. ["get", "property-name"]';
+  if (parameters.includes("zoom"))
+    return 'e.g. ["interpolate", ["linear"], ["zoom"], 5, …, 15, …]';
+  return 'e.g. ["literal", …]';
+}
+
+function expressionHint(descriptor: PropertyDescriptor): string {
+  const contexts = (descriptor.expression?.parameters ?? [])
+    .map(
+      (parameter) =>
+        (
+          ({
+            zoom: "zoom",
+            feature: "feature data",
+            "feature-state": "feature state",
+            "global-state": "global state",
+          }) as Record<string, string>
+        )[parameter] ?? parameter,
+    )
+    .join(", ");
+  const returnType = descriptor.raw.type;
+  return contexts
+    ? `expression → ${returnType} · inputs: ${contexts}`
+    : `expression → ${returnType}`;
+}
+
 export function PropertyInput({
   name,
   descriptor,
@@ -273,10 +299,25 @@ export function PropertyInput({
   onChange,
 }: PropertyInputProps) {
   const isSet = value !== undefined;
-  const valueIsExpression =
-    isScalarKind(descriptor) && typeof value === "object" && value !== null;
+  const valueIsExpression = isExpressionValue(value);
+  const supportsExpressions =
+    descriptor.expression !== undefined && descriptor.kind !== "json";
   const [expressionMode, setExpressionMode] = useState(false);
-  const showJson = expressionMode || valueIsExpression;
+  // Remembered so leaving expression mode can restore the previous plain
+  // value instead of dumping the user at the spec default.
+  const preExpressionValue = useRef<unknown>(undefined);
+  const showJson =
+    descriptor.kind === "json" || expressionMode || valueIsExpression;
+
+  const toggleExpressionMode = () => {
+    if (showJson) {
+      setExpressionMode(false);
+      if (isExpressionValue(value)) onChange(preExpressionValue.current);
+    } else {
+      preExpressionValue.current = value;
+      setExpressionMode(true);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -296,21 +337,30 @@ export function PropertyInput({
           )}
         </span>
         <div className="flex shrink-0 items-center gap-0.5">
-          {isScalarKind(descriptor) && (
+          {supportsExpressions && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  aria-label="Edit as expression"
+                  aria-label={
+                    showJson
+                      ? `Stop editing ${name} as expression`
+                      : `Edit ${name} as expression`
+                  }
                   className={cn(showJson && "text-primary")}
-                  onClick={() => setExpressionMode(!showJson)}
-                  disabled={valueIsExpression}
+                  onClick={toggleExpressionMode}
                 >
                   <BracesIcon />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Edit as JSON expression</TooltipContent>
+              <TooltipContent>
+                {showJson
+                  ? valueIsExpression
+                    ? "Discard expression, back to control"
+                    : "Back to control"
+                  : "Edit as expression"}
+              </TooltipContent>
             </Tooltip>
           )}
           {isSet && (
@@ -320,7 +370,10 @@ export function PropertyInput({
                   variant="ghost"
                   size="icon-sm"
                   aria-label={`Reset ${name}`}
-                  onClick={() => onChange(undefined)}
+                  onClick={() => {
+                    setExpressionMode(false);
+                    onChange(undefined);
+                  }}
                 >
                   <RotateCcwIcon />
                 </Button>
@@ -331,11 +384,19 @@ export function PropertyInput({
         </div>
       </div>
       {showJson ? (
-        <JsonEditor
-          value={value ?? descriptor.default}
-          onChange={onChange}
-          placeholder='e.g. ["get", "color"]'
-        />
+        <>
+          <JsonEditor
+            value={value ?? descriptor.default}
+            onChange={onChange}
+            validate={(candidate) =>
+              validatePropertyExpression(descriptor, name, candidate)
+            }
+            placeholder={expressionPlaceholder(descriptor)}
+          />
+          <p className="text-[11px] leading-tight text-muted-foreground">
+            {expressionHint(descriptor)}
+          </p>
+        </>
       ) : (
         <Editor descriptor={descriptor} value={value} onChange={onChange} />
       )}

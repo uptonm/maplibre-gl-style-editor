@@ -1,5 +1,5 @@
 import type { LayerSpecification } from "@maplibre/maplibre-gl-style-spec";
-import { latest } from "@maplibre/maplibre-gl-style-spec";
+import { expression, latest } from "@maplibre/maplibre-gl-style-spec";
 
 export const SUPPORTED_LAYER_TYPES = [
   "line",
@@ -17,7 +17,20 @@ export type EditorLayer = Extract<
   { type: SupportedLayerType }
 >;
 
-export type PropertyDescriptor =
+export type ExpressionSupport = {
+  interpolated: boolean;
+  parameters: string[];
+};
+
+type DescriptorBase = {
+  // Present when the spec allows an expression for this property; drives
+  // whether the expression toggle is offered and what the hint says.
+  expression?: ExpressionSupport;
+  // The raw spec entry, needed to validate expressions against the property.
+  raw: SpecProperty;
+};
+
+type DescriptorVariant =
   | {
       kind: "number";
       default: number;
@@ -34,6 +47,8 @@ export type PropertyDescriptor =
   | { kind: "string-array"; default: string[] }
   | { kind: "json"; default: unknown };
 
+export type PropertyDescriptor = DescriptorBase & DescriptorVariant;
+
 type SpecProperty = {
   type: string;
   default?: unknown;
@@ -43,6 +58,7 @@ type SpecProperty = {
   values?: Record<string, unknown> | unknown[];
   value?: string;
   length?: number;
+  expression?: ExpressionSupport;
 };
 
 const SLIDER_MAX_BY_UNITS: Record<string, number> = {
@@ -66,7 +82,7 @@ function sliderRange(property: SpecProperty): {
   return { min, max, step };
 }
 
-function toDescriptor(property: SpecProperty): PropertyDescriptor {
+function toDescriptor(property: SpecProperty): DescriptorVariant {
   switch (property.type) {
     case "number": {
       if (typeof property.default !== "number") break;
@@ -133,7 +149,11 @@ function descriptorsFor(
   const properties = reference[`${group}_${layerType}`] ?? {};
   const descriptors: Record<string, PropertyDescriptor> = {};
   for (const [name, property] of Object.entries(properties)) {
-    descriptors[name] = toDescriptor(property);
+    descriptors[name] = {
+      ...toDescriptor(property),
+      expression: property.expression,
+      raw: property,
+    };
   }
   return descriptors;
 }
@@ -228,4 +248,80 @@ export function createLayer(
 
 export function isSupportedLayerType(type: string): type is SupportedLayerType {
   return (SUPPORTED_LAYER_TYPES as readonly string[]).includes(type);
+}
+
+// True for anything that is not a plain value for its property: a real
+// expression array (["get", …] — but not a value array like [0, 0]) or a
+// legacy function object ({stops: …}).
+export function isExpressionValue(value: unknown): boolean {
+  if (expression.isExpression(value)) return true;
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function expressionErrors(
+  result: ReturnType<typeof expression.createPropertyExpression>,
+): string[] {
+  if (result.result !== "error") return [];
+  return result.value.map((error) =>
+    error.message ? error.message : String(error),
+  );
+}
+
+// Validates an expression against the property's spec entry: syntax, operator
+// names, return type, and context (data/zoom/interpolation support). Plain
+// values and legacy function objects return no errors — there is nothing to
+// check statically.
+//
+// An array only counts as a plain value where the property accepts one:
+// number tuples, string/enum arrays (font names, anchors), and array-like
+// spec types (padding, anchor offsets). For scalar-typed properties every
+// array must parse as an expression — that way a typo'd operator gets a real
+// error instead of silently becoming an invalid value.
+const SCALAR_SPEC_TYPES = new Set([
+  "number",
+  "color",
+  "boolean",
+  "enum",
+  "string",
+  "formatted",
+  "resolvedImage",
+]);
+
+export function validatePropertyExpression(
+  descriptor: PropertyDescriptor,
+  propertyName: string,
+  value: unknown,
+): string[] {
+  if (!Array.isArray(value)) return [];
+  if (!expression.isExpression(value)) {
+    const mustBeExpression =
+      SCALAR_SPEC_TYPES.has(descriptor.raw.type) ||
+      (descriptor.kind === "number-array" &&
+        !value.every((entry) => typeof entry === "number"));
+    if (!mustBeExpression) return [];
+  }
+  return expressionErrors(
+    expression.createPropertyExpression(
+      value,
+      propertyName,
+      descriptor.raw as unknown as Parameters<
+        typeof expression.createPropertyExpression
+      >[2],
+    ),
+  );
+}
+
+// Legacy array filters (["==", "LINE", "red"]) predate the expression syntax
+// and can't be statically validated here; only expression-style filters are
+// checked, against a boolean return type.
+export function validateFilter(value: unknown): string[] {
+  if (!expression.isExpressionFilter(value)) return [];
+  return expressionErrors(
+    expression.createPropertyExpression(value, "filter", {
+      type: "boolean",
+      default: true,
+      "property-type": "data-driven",
+      expression: { interpolated: false, parameters: ["zoom", "feature"] },
+    } as never),
+  );
 }

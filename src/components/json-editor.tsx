@@ -5,6 +5,9 @@ import { cn } from "~/lib/cn";
 type JsonEditorProps = {
   value: unknown;
   onChange: (value: unknown) => void;
+  // Extra checks beyond JSON syntax (e.g. expression validation); a commit
+  // only happens when this returns no errors.
+  validate?: (value: unknown) => string[];
   rows?: number;
   placeholder?: string;
 };
@@ -12,13 +15,14 @@ type JsonEditorProps = {
 export function JsonEditor({
   value,
   onChange,
+  validate,
   rows = 4,
   placeholder,
 }: JsonEditorProps) {
   const serialized = value === undefined ? "" : JSON.stringify(value, null, 2);
   const [text, setText] = useState(serialized);
   const [dirty, setDirty] = useState(false);
-  const [invalid, setInvalid] = useState(false);
+  const [errors, setErrors] = useState<string[]>([]);
 
   useEffect(() => {
     if (!dirty) setText(serialized);
@@ -28,15 +32,19 @@ export function JsonEditor({
     setText(raw);
     setDirty(true);
     if (raw.trim() === "") {
-      setInvalid(false);
+      setErrors([]);
       return;
     }
+    let parsed: unknown;
     try {
-      onChange(JSON.parse(raw));
-      setInvalid(false);
+      parsed = JSON.parse(raw);
     } catch {
-      setInvalid(true);
+      setErrors(["Invalid JSON"]);
+      return;
     }
+    const validationErrors = validate?.(parsed) ?? [];
+    setErrors(validationErrors);
+    if (validationErrors.length === 0) onChange(parsed);
   };
 
   return (
@@ -49,10 +57,15 @@ export function JsonEditor({
         onChange={(event) => commit(event.target.value)}
         onBlur={() => setDirty(false)}
         className={cn(
-          invalid && "border-destructive focus-visible:ring-destructive",
+          errors.length > 0 &&
+            "border-destructive focus-visible:ring-destructive",
         )}
       />
-      {invalid && <p className="text-xs text-destructive">Invalid JSON</p>}
+      {errors.map((error) => (
+        <p key={error} className="text-xs text-destructive">
+          {error}
+        </p>
+      ))}
     </div>
   );
 }
