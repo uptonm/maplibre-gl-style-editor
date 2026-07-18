@@ -20,6 +20,15 @@ exporting a ready-to-use MapLibre style document — a mini
   cascading deletes.
 - Layer management: add, duplicate, rename, reorder, hide, delete; zoom
   ranges, filters, and a JSON expression mode for any property.
+- Inspects features on click — property values feed straight into filters
+  and `["get", …]` expressions (click a property to copy one).
+- Colors layers by data: pick a feature property and get a generated
+  `match` palette or `interpolate` ramp expression.
+- Drag-and-drop GeoJSON straight onto the map; sources and starter layers
+  appear per geometry type.
+- Globe projection toggle, pitch/bearing controls, and a zoom scrubber for
+  watching interpolation expressions respond.
+- Shares the whole style — data included — as a compressed URL.
 - Undo/redo (⌘Z / ⇧⌘Z), local-storage persistence, and a live style JSON
   panel.
 - Works without any API key on the free MapLibre demo tiles or a blank

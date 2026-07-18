@@ -19,9 +19,12 @@ export type StyleState = {
   layerOrder: string[];
 };
 
+export type Projection = "mercator" | "globe";
+
 export type EditorState = StyleState & {
   basemap: BasemapId;
   maptilerKey: string;
+  projection: Projection;
 
   addSource: (id: string, data: FeatureCollection | string) => void;
   removeSource: (id: string) => void;
@@ -39,6 +42,7 @@ export type EditorState = StyleState & {
   replaceStyle: (style: StyleState) => void;
   setBasemap: (basemap: BasemapId) => void;
   setMaptilerKey: (key: string) => void;
+  setProjection: (projection: Projection) => void;
 };
 
 function demoStyle(): StyleState {
@@ -102,6 +106,7 @@ export const useEditorStore = create<EditorState>()(
         ...demoStyle(),
         basemap: "demotiles",
         maptilerKey: "",
+        projection: "mercator",
 
         addSource: (id, data) =>
           set((state) => ({
@@ -231,6 +236,7 @@ export const useEditorStore = create<EditorState>()(
         replaceStyle: (style) => set(() => ({ ...style })),
         setBasemap: (basemap) => set(() => ({ basemap })),
         setMaptilerKey: (maptilerKey) => set(() => ({ maptilerKey })),
+        setProjection: (projection) => set(() => ({ projection })),
       }),
       {
         name: "maplibre-style-editor",
@@ -243,6 +249,7 @@ export const useEditorStore = create<EditorState>()(
           layerOrder: state.layerOrder,
           basemap: state.basemap,
           maptilerKey: state.maptilerKey,
+          projection: state.projection,
         }),
       },
     ),

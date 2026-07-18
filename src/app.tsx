@@ -6,6 +6,7 @@ import { SourcesPanel } from "~/components/panels/sources-panel";
 import { StyleJsonPanel } from "~/components/panels/style-json-panel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { TooltipProvider } from "~/components/ui/tooltip";
+import { decodeShareHash } from "~/lib/share";
 import { useEditorStore } from "~/lib/store";
 
 function isTypingTarget(target: EventTarget | null): boolean {
@@ -35,8 +36,18 @@ function useUndoShortcuts() {
   }, []);
 }
 
+function useShareHashImport() {
+  useEffect(() => {
+    const shared = decodeShareHash(location.hash);
+    if (!shared) return;
+    useEditorStore.getState().replaceStyle(shared);
+    history.replaceState(null, "", location.pathname + location.search);
+  }, []);
+}
+
 export function App() {
   useUndoShortcuts();
+  useShareHashImport();
 
   return (
     <TooltipProvider delayDuration={300}>

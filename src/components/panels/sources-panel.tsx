@@ -11,44 +11,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
-import { describeCollection } from "~/lib/geo";
+import {
+  coerceFeatureCollection,
+  describeCollection,
+  slugify,
+} from "~/lib/geo";
 import { uniqueId, useEditorStore } from "~/lib/store";
-
-function coerceFeatureCollection(parsed: unknown): FeatureCollection | null {
-  if (typeof parsed !== "object" || parsed === null) return null;
-  const value = parsed as { type?: string };
-  if (value.type === "FeatureCollection") return value as FeatureCollection;
-  if (value.type === "Feature") {
-    return {
-      type: "FeatureCollection",
-      features: [value as FeatureCollection["features"][number]],
-    };
-  }
-  if (
-    typeof value.type === "string" &&
-    [
-      "Point",
-      "MultiPoint",
-      "LineString",
-      "MultiLineString",
-      "Polygon",
-      "MultiPolygon",
-      "GeometryCollection",
-    ].includes(value.type)
-  ) {
-    return {
-      type: "FeatureCollection",
-      features: [
-        {
-          type: "Feature",
-          geometry: value as GeoJSON.Geometry,
-          properties: {},
-        },
-      ],
-    };
-  }
-  return null;
-}
 
 function downloadJson(filename: string, data: unknown): void {
   const blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -60,16 +28,6 @@ function downloadJson(filename: string, data: unknown): void {
   anchor.download = filename;
   anchor.click();
   URL.revokeObjectURL(url);
-}
-
-function slugify(name: string): string {
-  return (
-    name
-      .toLowerCase()
-      .replace(/\.(geo)?json$/i, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "") || "source"
-  );
 }
 
 function SourceCard({ id }: { id: string }) {

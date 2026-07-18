@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { StyleWizardDialog } from "~/components/dialogs/style-wizard-dialog";
 import { JsonEditor } from "~/components/json-editor";
 import { PropertyInput } from "~/components/property-input";
 import {
@@ -180,6 +181,8 @@ export function LayerEditor({ layer }: { layer: EditorLayer }) {
       </div>
 
       <ZoomRange layer={layer} />
+
+      <StyleWizardDialog layer={layer} />
 
       <div className="flex flex-col gap-1.5">
         <Label>Filter</Label>

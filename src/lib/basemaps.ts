@@ -1,4 +1,7 @@
-import type { StyleSpecification } from "@maplibre/maplibre-gl-style-spec";
+// maplibre-gl's own copy of the type, not the style-spec package's: these
+// styles are handed to the Map constructor/setStyle, and the two packages'
+// structurally-similar types no longer unify under tsc.
+import type { StyleSpecification } from "maplibre-gl";
 
 export const DEMOTILES_GLYPHS =
   "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf";
@@ -70,8 +73,11 @@ const BLANK_STYLE: StyleSpecification = {
 
 export function envMaptilerKey(): string {
   // Must stay a plain process.env member access: that's the only pattern
-  // Bun.build's env option statically inlines. import.meta.env and optional
-  // chaining both survive to the browser, where they resolve to nothing.
+  // Bun.build's env option statically inlines (import.meta.env and optional
+  // chaining survive to the browser). The typeof guard covers builds where
+  // the variable is unset — Bun then leaves the access in place and a bare
+  // `process` read would throw in the browser.
+  if (typeof process === "undefined") return "";
   return process.env.BUN_PUBLIC_MAPTILER_API_KEY ?? "";
 }
 

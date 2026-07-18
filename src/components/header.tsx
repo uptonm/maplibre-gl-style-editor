@@ -3,6 +3,7 @@ import {
   EllipsisVerticalIcon,
   ExternalLinkIcon,
   KeyRoundIcon,
+  Link2Icon,
   MapIcon,
   Redo2Icon,
   RotateCcwIcon,
@@ -13,6 +14,7 @@ import { useState } from "react";
 import { useStore } from "zustand";
 import { ExportDialog } from "~/components/dialogs/export-dialog";
 import { ImportDialog } from "~/components/dialogs/import-dialog";
+import { ShareDialog } from "~/components/dialogs/share-dialog";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -175,6 +177,12 @@ export function Header() {
         <BasemapPicker />
         <MaptilerKeyDialog />
         <div className="mx-1 h-5 w-px bg-border" />
+        <ShareDialog>
+          <Button variant="outline">
+            <Link2Icon />
+            Share
+          </Button>
+        </ShareDialog>
         <ImportDialog>
           <Button variant="outline">
             <UploadIcon />
