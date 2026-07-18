@@ -56,6 +56,8 @@ export default async function middleware(request: Request) {
 }
 
 export const config = {
+  // @clerk/backend needs Node (not Edge) — Vercel Routing Middleware supports this.
+  runtime: "nodejs",
   matcher: [
     /*
      * Gate document + JS (SPA shell). Skip immutable media/fonts so link
