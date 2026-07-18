@@ -74,11 +74,15 @@ const BLANK_STYLE: StyleSpecification = {
 export function envMaptilerKey(): string {
   // Must stay a plain process.env member access: that's the only pattern
   // Bun.build's env option statically inlines (import.meta.env and optional
-  // chaining survive to the browser). The typeof guard covers builds where
-  // the variable is unset — Bun then leaves the access in place and a bare
-  // `process` read would throw in the browser.
-  if (typeof process === "undefined") return "";
-  return process.env.BUN_PUBLIC_MAPTILER_API_KEY ?? "";
+  // chaining survive to the browser). The try/catch covers keyless builds,
+  // where the access is left in place and the bare `process` read throws —
+  // a typeof guard would instead short-circuit keyed builds, because
+  // `process` never exists in the browser even when the value was inlined.
+  try {
+    return process.env.BUN_PUBLIC_MAPTILER_API_KEY ?? "";
+  } catch {
+    return "";
+  }
 }
 
 export function resolveBasemapStyle(
