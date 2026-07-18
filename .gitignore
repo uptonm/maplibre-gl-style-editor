@@ -5,3 +5,5 @@ coverage/
 *.log
 .env
 .env.local
+.vercel
+.env*
