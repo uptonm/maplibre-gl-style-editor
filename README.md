@@ -1,52 +1,60 @@
-# MapLibre GL Style Editor
+# MapLibre Style Editor
 
-A browser-based editor for exploring and changing MapLibre layer styles with a live map preview.
+A browser-based editor for quickly styling multi-layer GeoJSON maps and
+exporting a ready-to-use MapLibre style document — a mini
+[Maputnik](https://maputnik.github.io/) for your own data.
 
 [Open the live editor](https://map.uptonm.dev/)
 
-![The editor showing Washington, DC Metro lines and stations on a MapLibre map](public/screenshots/editor-overview.jpg)
+![The editor showing Washington, DC Metro lines and stations on a MapLibre map](public/screenshots/editor-overview.png)
 
 ## What it does
 
-- Updates MapLibre paint, layout, metadata, zoom, and filter properties in real time.
-- Supports line, fill, symbol, and circle layers.
-- Chooses an appropriate control for each property, including colors, sliders, selects, tuples, text, and expressions.
-- Adds, reorders, edits, and resets layers without manually editing a style document.
-- Persists the current layer state in local storage between visits.
-- Fits the map to the loaded GeoJSON data and ships with Washington, DC Metro data as a working example.
+- Edits every paint and layout property of line, fill, circle, symbol,
+  heatmap, and fill-extrusion layers — the inputs are generated from the
+  official MapLibre style spec, so nothing is missing or out of date.
+- Exports the result as a valid `version: 8` style document (with GeoJSON
+  inlined or referenced) or as a layers-only snippet, ready to paste into any
+  MapLibre or Mapbox GL map. Imports existing style documents too.
+- Manages sources: upload, paste, or link GeoJSON, with feature stats and
+  cascading deletes.
+- Layer management: add, duplicate, rename, reorder, hide, delete; zoom
+  ranges, filters, and a JSON expression mode for any property.
+- Undo/redo (⌘Z / ⇧⌘Z), local-storage persistence, and a live style JSON
+  panel.
+- Works without any API key on the free MapLibre demo tiles or a blank
+  canvas; a MapTiler key (build-time or entered in the UI) unlocks street,
+  light/dark, satellite, and outdoor basemaps.
 
-![Layer paint controls updating the live map](public/screenshots/layer-properties.jpg)
-
-## Current scope
-
-The layer editor is functional and deployed. The Sources panel is still a work in progress; the public demo currently loads the bundled DC Metro GeoJSON sources.
+![Layer paint controls updating the live map](public/screenshots/layer-properties.png)
 
 ## Built with
 
-- Next.js, React, and TypeScript
-- MapLibre GL JS and Turf
-- Legend-State for reactive state and local persistence
-- Tailwind CSS and Radix UI
-- tRPC and TanStack Query
+- [Bun](https://bun.sh) — runtime, package manager, bundler, dev server, and
+  test runner
+- React 19, TypeScript, Tailwind CSS 4, Radix UI
+- MapLibre GL JS and `@maplibre/maplibre-gl-style-spec`
+- zustand + zundo for state, undo/redo, and persistence
+- Biome for lint and format
 
 ## Run locally
 
-You need a [MapTiler](https://www.maptiler.com/) API key for the basemap.
-
 ```bash
-pnpm install
+bun install
+bun dev        # dev server with HMR
 ```
 
-Create `.env.local`:
+Optionally create `.env.local` for MapTiler basemaps (or just paste a key
+into the app's key dialog):
 
 ```bash
-NEXT_PUBLIC_MAPTILER_API_KEY=your_key_here
+BUN_PUBLIC_MAPTILER_API_KEY=your_key_here
 ```
 
-Start the development server:
+Other commands:
 
 ```bash
-pnpm dev
+bun test           # unit tests
+bun run check      # typecheck + lint
+bun run build      # static production build in dist/
 ```
-
-Then open [http://localhost:3000](http://localhost:3000).
