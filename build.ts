@@ -1,11 +1,28 @@
 import tailwind from "bun-plugin-tailwind";
 
+function publicEnv(name: string): string {
+  return JSON.stringify(process.env[name] ?? "");
+}
+
 const result = await Bun.build({
   entrypoints: ["./index.html"],
   outdir: "./dist",
   minify: true,
   sourcemap: "linked",
+  // MapTiler and other client secrets use BUN_PUBLIC_*. Clerk fleet keys use
+  // NEXT_PUBLIC_* (shared with the Vercel edge middleware), so define them.
   env: "BUN_PUBLIC_*",
+  define: {
+    "process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": publicEnv(
+      "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+    ),
+    "process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL": publicEnv(
+      "NEXT_PUBLIC_CLERK_SIGN_IN_URL",
+    ),
+    "process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL": publicEnv(
+      "NEXT_PUBLIC_CLERK_SIGN_UP_URL",
+    ),
+  },
   plugins: [tailwind],
 });
 
