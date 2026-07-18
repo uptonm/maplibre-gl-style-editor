@@ -93,3 +93,49 @@
     -webkit-font-smoothing: antialiased;
   }
 }
+
+/* MapLibre's stock controls ship light-themed; restyle them with the editor
+   tokens. These rules sit after the vendor import, so equal-specificity
+   declarations here win the cascade. */
+.maplibregl-ctrl-group {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.4);
+}
+
+.maplibregl-ctrl-group button {
+  background: transparent;
+}
+
+.maplibregl-ctrl-group button + button {
+  border-top: 1px solid var(--color-border);
+}
+
+.maplibregl-ctrl-group button:not(:disabled):hover {
+  background-color: var(--color-accent);
+}
+
+/* Icons are dark inline-SVG background images; invert lightens them and the
+   hue rotation keeps the compass needle red instead of cyan. */
+.maplibregl-ctrl button .maplibregl-ctrl-icon {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+.maplibregl-ctrl-attrib {
+  background: color-mix(in oklch, var(--color-card) 85%, transparent);
+  border-radius: var(--radius-md);
+  color: var(--color-muted-foreground);
+}
+
+.maplibregl-ctrl-attrib a {
+  color: var(--color-foreground);
+}
+
+.maplibregl-ctrl-attrib.maplibregl-compact {
+  background: var(--color-card);
+}
+
+.maplibregl-ctrl-attrib summary.maplibregl-ctrl-attrib-button {
+  filter: invert(1);
+}

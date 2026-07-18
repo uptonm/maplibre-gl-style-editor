@@ -171,7 +171,7 @@ function ZoomSimulator({ map }: { map: MapGL | null }) {
   }, [map]);
 
   return (
-    <div className="absolute bottom-3 right-3 z-10 flex w-56 items-center gap-2.5 rounded-lg border bg-card/95 px-3 py-2 shadow-lg">
+    <div className="absolute bottom-3 right-12 z-10 flex w-56 items-center gap-2.5 rounded-lg border bg-card/95 px-3 py-2 shadow-lg">
       <span className="shrink-0 font-mono text-xs text-muted-foreground">
         z{zoom.toFixed(1)}
       </span>
