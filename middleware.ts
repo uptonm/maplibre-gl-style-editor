@@ -1,6 +1,6 @@
 import { createClerkClient } from "@clerk/backend";
 import { next } from "@vercel/functions";
-import { isAppGated } from "./lib/gates";
+import { isAppGated } from "./lib/gates.js";
 
 const AUTHORIZED_PARTIES = [
   "https://map.uptonm.dev",
