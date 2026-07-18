@@ -141,9 +141,9 @@ function MaptilerKeyDialog() {
         <DialogContent className="max-w-md">
           <DialogTitle>MapTiler API key</DialogTitle>
           <DialogDescription>
-            Unlocks the MapTiler basemaps. Stored only in this browser&apos;s
-            local storage. Without a key the editor uses the free MapLibre demo
-            tiles.
+            {envMaptilerKey()
+              ? "This deployment ships with a MapTiler key, so those basemaps already work. Enter your own key to override it — the override lives only in this browser's local storage."
+              : "Unlocks the MapTiler basemaps. Stored only in this browser's local storage. Without a key the editor falls back to the free MapLibre demo tiles."}
           </DialogDescription>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="maptiler-key">API key</Label>
