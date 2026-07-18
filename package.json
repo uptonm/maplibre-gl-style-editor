@@ -50,6 +50,6 @@
     "@types/react-dom": "^19",
     "bun-plugin-tailwind": "^0.1.2",
     "tailwindcss": "^4.3.3",
-    "typescript": "^7.0.2"
+    "typescript": "~5.8.3"
   }
 }
